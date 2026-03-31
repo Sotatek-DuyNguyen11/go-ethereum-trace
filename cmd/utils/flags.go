@@ -582,6 +582,12 @@ var (
 		TakesFile: true,
 		Category:  flags.AccountCategory,
 	}
+	CliqueSignerKeyFlag = &cli.PathFlag{
+		Name:      "clique.signerkey",
+		Usage:     "Raw secp256k1 private key file used for Clique block signing",
+		TakesFile: true,
+		Category:  flags.AccountCategory,
+	}
 	ExternalSignerFlag = &cli.StringFlag{
 		Name:     "signer",
 		Usage:    "External signer (url or path to ipc file)",

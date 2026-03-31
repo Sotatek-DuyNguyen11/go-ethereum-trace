@@ -1,0 +1,180 @@
+services:
+  tools:
+    build:
+      context: ../..
+      dockerfile: docker/poa-chain/Dockerfile
+    image: go-ethereum-trace:poa-chain
+    working_dir: /workspace
+    volumes:
+      - ../..:/workspace
+
+  node1:
+    image: go-ethereum-trace:poa-chain
+    container_name: poa-tracing-node-1
+    restart: unless-stopped
+    depends_on:
+      - tools
+    ports:
+      - "127.0.0.1:9545:8545"
+      - "127.0.0.1:9546:8546"
+      - "30413:30303/tcp"
+      - "30413:30303/udp"
+    volumes:
+      - ./genesis.json:/config/genesis.json:ro
+      - ./data/node1:/data
+    networks:
+      default:
+        ipv4_address: 172.32.0.11
+    command:
+      [
+        "geth",
+        "--datadir",
+        "/data",
+        "--networkid",
+        "31337",
+        "--syncmode",
+        "full",
+        "--port",
+        "30303",
+        "--bootnodes",
+        "${BOOTNODES}",
+        "--http",
+        "--http.addr",
+        "0.0.0.0",
+        "--http.port",
+        "8545",
+        "--http.vhosts",
+        "localhost",
+        "--http.api",
+        "eth,net,web3,debug,txpool,clique",
+        "--ws",
+        "--ws.addr",
+        "0.0.0.0",
+        "--ws.port",
+        "8546",
+        "--ws.origins",
+        "http://localhost",
+        "--ws.api",
+        "eth,net,web3,debug,txpool,clique",
+        "--mine",
+        "--clique.signerkey",
+        "/data/signerkey",
+        "--nat",
+        "extip:172.32.0.11"
+      ]
+
+  node2:
+    image: go-ethereum-trace:poa-chain
+    container_name: poa-tracing-node-2
+    restart: unless-stopped
+    depends_on:
+      - node1
+    ports:
+      - "127.0.0.1:9547:8545"
+      - "127.0.0.1:9548:8546"
+      - "30414:30303/tcp"
+      - "30414:30303/udp"
+    volumes:
+      - ./genesis.json:/config/genesis.json:ro
+      - ./data/node2:/data
+    networks:
+      default:
+        ipv4_address: 172.32.0.12
+    command:
+      [
+        "geth",
+        "--datadir",
+        "/data",
+        "--networkid",
+        "31337",
+        "--syncmode",
+        "full",
+        "--port",
+        "30303",
+        "--bootnodes",
+        "${BOOTNODES}",
+        "--http",
+        "--http.addr",
+        "0.0.0.0",
+        "--http.port",
+        "8545",
+        "--http.vhosts",
+        "localhost",
+        "--http.api",
+        "eth,net,web3,debug,txpool,clique",
+        "--ws",
+        "--ws.addr",
+        "0.0.0.0",
+        "--ws.port",
+        "8546",
+        "--ws.origins",
+        "http://localhost",
+        "--ws.api",
+        "eth,net,web3,debug,txpool,clique",
+        "--mine",
+        "--clique.signerkey",
+        "/data/signerkey",
+        "--nat",
+        "extip:172.32.0.12"
+      ]
+
+  node3:
+    image: go-ethereum-trace:poa-chain
+    container_name: poa-tracing-node-3
+    restart: unless-stopped
+    depends_on:
+      - node1
+    ports:
+      - "127.0.0.1:9549:8545"
+      - "127.0.0.1:9550:8546"
+      - "30415:30303/tcp"
+      - "30415:30303/udp"
+    volumes:
+      - ./genesis.json:/config/genesis.json:ro
+      - ./data/node3:/data
+    networks:
+      default:
+        ipv4_address: 172.32.0.13
+    command:
+      [
+        "geth",
+        "--datadir",
+        "/data",
+        "--networkid",
+        "31337",
+        "--syncmode",
+        "full",
+        "--port",
+        "30303",
+        "--bootnodes",
+        "${BOOTNODES}",
+        "--http",
+        "--http.addr",
+        "0.0.0.0",
+        "--http.port",
+        "8545",
+        "--http.vhosts",
+        "localhost",
+        "--http.api",
+        "eth,net,web3,debug,txpool,clique",
+        "--ws",
+        "--ws.addr",
+        "0.0.0.0",
+        "--ws.port",
+        "8546",
+        "--ws.origins",
+        "http://localhost",
+        "--ws.api",
+        "eth,net,web3,debug,txpool,clique",
+        "--mine",
+        "--clique.signerkey",
+        "/data/signerkey",
+        "--nat",
+        "extip:172.32.0.13"
+      ]
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.32.0.0/24

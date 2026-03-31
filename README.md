@@ -213,6 +213,47 @@ There are three different solutions depending on your use case:
   * If you want a convenient single node environment for testing, you can use our [Dev Mode](https://geth.ethereum.org/docs/developers/dapp-developer/dev-mode).
   * If you are looking for a multiple node test network, you can set one up quite easily with [Kurtosis](https://geth.ethereum.org/docs/fundamentals/kurtosis).
 
+#### Repo Docker examples
+
+This fork also ships local Docker labs under `docker/`.
+
+For the 3-node Clique PoA lab:
+
+```shell
+bash docker/poa-chain/scripts/init.sh
+bash docker/poa-chain/scripts/start.sh
+```
+
+`init.sh` uses fixed dev signer keys and fixed node keys, so repeated resets recreate the same validator addresses and bootnodes.
+
+If you want the older behavior where each init generates a fresh signer set, fresh node keys and a fresh genesis:
+
+```shell
+bash docker/poa-chain/scripts/init_generate.sh --force
+bash docker/poa-chain/scripts/start.sh
+```
+
+If you only want to temporarily stop the chain and keep the existing data:
+
+```shell
+docker compose -f docker/poa-chain/docker-compose.yml down
+docker compose -f docker/poa-chain/docker-compose.yml up -d
+```
+
+If you want to restart the PoA lab from scratch with a fresh genesis, fresh signer keys and empty datadirs:
+
+```shell
+docker compose -f docker/poa-chain/docker-compose.yml down
+bash docker/poa-chain/scripts/init.sh --force
+docker compose -f docker/poa-chain/docker-compose.yml up -d
+```
+
+Additional repo-specific guides:
+
+  * `guide.md`
+  * `docs/poa-chain-guide.md`
+  * `docker/poa-chain/README.md`
+
 ## Contribution
 
 Thank you for considering helping out with the source code! We welcome contributions

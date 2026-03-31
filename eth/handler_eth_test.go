@@ -75,6 +75,11 @@ func (h *testEthHandler) Handle(peer *eth.Peer, packet eth.Packet) error {
 	}
 }
 
+func (h *testEthHandler) HandleBlockRangeUpdate(peer *eth.Peer, update *eth.BlockRangeUpdatePacket) error {
+	peer.SetBlockRange(update)
+	return nil
+}
+
 // Tests that peers are correctly accepted (or rejected) based on the advertised
 // fork IDs in the protocol handshake.
 func TestForkIDSplit69(t *testing.T) { testForkIDSplit(t, eth.ETH69) }

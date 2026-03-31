@@ -31,6 +31,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/consensus"
+	"github.com/ethereum/go-ethereum/consensus/beacon"
+	"github.com/ethereum/go-ethereum/consensus/clique"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/filtermaps"
 	"github.com/ethereum/go-ethereum/core/rawdb"
@@ -391,6 +393,15 @@ func makeExtraData(extra []byte) []byte {
 // NOTE, some of these services probably need to be moved to somewhere else.
 func (s *Ethereum) APIs() []rpc.API {
 	apis := ethapi.GetAPIs(s.APIBackend)
+
+	if beaconEngine, ok := s.engine.(*beacon.Beacon); ok {
+		if cliqueEngine, ok := beaconEngine.InnerEngine().(*clique.Clique); ok {
+			apis = append(apis, rpc.API{
+				Namespace: "clique",
+				Service:   cliqueEngine.NewAPI(s.blockchain),
+			})
+		}
+	}
 
 	// Append all the local APIs and return
 	return append(apis, []rpc.API{

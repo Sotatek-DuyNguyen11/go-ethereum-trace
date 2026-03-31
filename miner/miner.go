@@ -76,6 +76,10 @@ type Miner struct {
 	chain       *core.BlockChain
 	pending     *pending
 	pendingMu   sync.Mutex // Lock protects the pending block
+
+	sealingMu   sync.Mutex
+	sealingStop chan struct{}
+	sealingDone chan struct{}
 }
 
 // New creates a new miner with provided config.
@@ -133,6 +137,13 @@ func (miner *Miner) SetGasTip(tip *big.Int) error {
 	miner.config.GasPrice = tip
 	miner.confMu.Unlock()
 	return nil
+}
+
+// SetFeeRecipient updates the address that receives transaction fees in locally built blocks.
+func (miner *Miner) SetFeeRecipient(addr common.Address) {
+	miner.confMu.Lock()
+	miner.config.PendingFeeRecipient = addr
+	miner.confMu.Unlock()
 }
 
 // BuildPayload builds the payload according to the provided parameters.

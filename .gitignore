@@ -57,3 +57,10 @@ cmd/geth/geth
 cmd/rlpdump/rlpdump
 cmd/workload/workload
 cmd/keeper/keeper
+docker/private-chain/data/
+docker/three-node/data/
+docker/poa-chain/data/
+docker/poa-chain/.env
+docker/poa-chain/enodes.txt
+docker/poa-chain/password.txt
+docker/poa-chain/genesis.json

@@ -1,0 +1,49 @@
+services:
+  init:
+    image: go-ethereum-trace:private-chain
+    container_name: geth-private-init
+    volumes:
+      - ./genesis.json:/config/genesis.json:ro
+      - ./data:/data
+    command: ["init", "--datadir", "/data", "/config/genesis.json"]
+
+  geth:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    image: go-ethereum-trace:private-chain
+    container_name: geth-private-chain
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8545:8545"
+      - "127.0.0.1:8546:8546"
+    volumes:
+      - ./data:/data
+    command:
+      [
+        "--dev",
+        "--datadir",
+        "/data",
+        "--networkid",
+        "31337",
+        "--http",
+        "--http.addr",
+        "0.0.0.0",
+        "--http.port",
+        "8545",
+        "--http.vhosts",
+        "localhost",
+        "--http.api",
+        "eth,net,web3,debug,txpool",
+        "--ws",
+        "--ws.addr",
+        "0.0.0.0",
+        "--ws.port",
+        "8546",
+        "--ws.origins",
+        "http://localhost",
+        "--ws.api",
+        "eth,net,web3,debug,txpool",
+        "--dev.period",
+        "2"
+      ]

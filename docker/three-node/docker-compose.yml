@@ -1,0 +1,179 @@
+services:
+  init-node1:
+    image: go-ethereum-trace:private-chain
+    container_name: geth-3node-init-node1
+    volumes:
+      - ./genesis.json:/config/genesis.json:ro
+      - ./data/node1:/data
+    command: ["init", "--datadir", "/data", "/config/genesis.json"]
+
+  init-node2:
+    image: go-ethereum-trace:private-chain
+    container_name: geth-3node-init-node2
+    volumes:
+      - ./genesis.json:/config/genesis.json:ro
+      - ./data/node2:/data
+    command: ["init", "--datadir", "/data", "/config/genesis.json"]
+
+  init-node3:
+    image: go-ethereum-trace:private-chain
+    container_name: geth-3node-init-node3
+    volumes:
+      - ./genesis.json:/config/genesis.json:ro
+      - ./data/node3:/data
+    command: ["init", "--datadir", "/data", "/config/genesis.json"]
+
+  node1:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    image: go-ethereum-trace:private-chain
+    container_name: geth-3node-node1
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:18545:8545"
+      - "127.0.0.1:18546:8546"
+      - "30313:30303/tcp"
+      - "30313:30303/udp"
+    volumes:
+      - ./data/node1:/data
+    networks:
+      default:
+        ipv4_address: 172.31.0.11
+    command:
+      [
+        "--datadir",
+        "/data",
+        "--networkid",
+        "31337",
+        "--nodekeyhex",
+        "03619a0b954f1313c7e55410e98d85f478bda45c06db520932a54b048050536a",
+        "--port",
+        "30303",
+        "--http",
+        "--http.addr",
+        "0.0.0.0",
+        "--http.port",
+        "8545",
+        "--http.vhosts",
+        "localhost",
+        "--http.api",
+        "eth,net,web3,admin",
+        "--ws",
+        "--ws.addr",
+        "0.0.0.0",
+        "--ws.port",
+        "8546",
+        "--ws.origins",
+        "http://localhost",
+        "--ws.api",
+        "eth,net,web3,admin",
+        "--nat",
+        "extip:172.31.0.11"
+      ]
+
+  node2:
+    image: go-ethereum-trace:private-chain
+    container_name: geth-3node-node2
+    restart: unless-stopped
+    depends_on:
+      - node1
+    ports:
+      - "127.0.0.1:28545:8545"
+      - "127.0.0.1:28546:8546"
+      - "30314:30303/tcp"
+      - "30314:30303/udp"
+    volumes:
+      - ./data/node2:/data
+    networks:
+      default:
+        ipv4_address: 172.31.0.12
+    command:
+      [
+        "--datadir",
+        "/data",
+        "--networkid",
+        "31337",
+        "--nodekeyhex",
+        "eb8d34937f4f76a8c2a18f63a722bfc3fc1c33d31fe907242e840e0382d8f721",
+        "--port",
+        "30303",
+        "--bootnodes",
+        "enode://dd888ce991e067a2ccfaa5c93fb3863295765f187d003aa2d7d2bcd65a38c4dd95b4b613f61cd3d8f4673074ea4b24d6b4011c746b1774637d9774db98d6bbde@172.31.0.11:30303",
+        "--http",
+        "--http.addr",
+        "0.0.0.0",
+        "--http.port",
+        "8545",
+        "--http.vhosts",
+        "localhost",
+        "--http.api",
+        "eth,net,web3,admin",
+        "--ws",
+        "--ws.addr",
+        "0.0.0.0",
+        "--ws.port",
+        "8546",
+        "--ws.origins",
+        "http://localhost",
+        "--ws.api",
+        "eth,net,web3,admin",
+        "--nat",
+        "extip:172.31.0.12"
+      ]
+
+  node3:
+    image: go-ethereum-trace:private-chain
+    container_name: geth-3node-node3
+    restart: unless-stopped
+    depends_on:
+      - node1
+    ports:
+      - "127.0.0.1:38545:8545"
+      - "127.0.0.1:38546:8546"
+      - "30315:30303/tcp"
+      - "30315:30303/udp"
+    volumes:
+      - ./data/node3:/data
+    networks:
+      default:
+        ipv4_address: 172.31.0.13
+    command:
+      [
+        "--datadir",
+        "/data",
+        "--networkid",
+        "31337",
+        "--nodekeyhex",
+        "12a9a604ebbbb91b8eec3da56c72979a6f2f67c3c3c466593c16a49997af47c0",
+        "--port",
+        "30303",
+        "--bootnodes",
+        "enode://dd888ce991e067a2ccfaa5c93fb3863295765f187d003aa2d7d2bcd65a38c4dd95b4b613f61cd3d8f4673074ea4b24d6b4011c746b1774637d9774db98d6bbde@172.31.0.11:30303",
+        "--http",
+        "--http.addr",
+        "0.0.0.0",
+        "--http.port",
+        "8545",
+        "--http.vhosts",
+        "localhost",
+        "--http.api",
+        "eth,net,web3,admin",
+        "--ws",
+        "--ws.addr",
+        "0.0.0.0",
+        "--ws.port",
+        "8546",
+        "--ws.origins",
+        "http://localhost",
+        "--ws.api",
+        "eth,net,web3,admin",
+        "--nat",
+        "extip:172.31.0.13"
+      ]
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.31.0.0/24

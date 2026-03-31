@@ -290,6 +290,19 @@ func (h *handler) runEthPeer(peer *eth.Peer, handler eth.Handler) error {
 			return err
 		}
 	}
+	// A local block may have been imported before this peer finished the handshake
+	// and registration sequence. Push the current range once so late joiners
+	// don't miss the latest head announcement.
+	head := h.chain.CurrentBlock()
+	earliest, _ := h.chain.HistoryPruningCutoff()
+	currentRange := eth.BlockRangeUpdatePacket{
+		EarliestBlock:   min(head.Number.Uint64(), earliest),
+		LatestBlock:     head.Number.Uint64(),
+		LatestBlockHash: head.Hash(),
+	}
+	if err := peer.SendBlockRangeUpdate(currentRange); err != nil {
+		peer.Log().Debug("Failed to send initial block range update", "err", err)
+	}
 	// Propagate existing transactions. new transactions appearing
 	// after this will be sent via broadcasts.
 	h.syncTransactions(peer)
@@ -641,8 +654,7 @@ func (st *blockRangeState) update(chain *core.BlockChain, latest *types.Header) 
 // want to send it immediately.
 func (st *blockRangeState) shouldSend() bool {
 	next := st.next.Load()
-	return next.LatestBlock < st.prev.LatestBlock ||
-		next.LatestBlock-st.prev.LatestBlock >= 32
+	return next.LatestBlock != st.prev.LatestBlock || next.LatestBlockHash != st.prev.LatestBlockHash
 }
 
 func (st *blockRangeState) stop() {

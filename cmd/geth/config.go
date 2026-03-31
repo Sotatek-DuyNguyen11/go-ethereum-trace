@@ -35,7 +35,10 @@ import (
 	"github.com/ethereum/go-ethereum/beacon/blsync"
 	"github.com/ethereum/go-ethereum/cmd/utils"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/consensus/beacon"
+	"github.com/ethereum/go-ethereum/consensus/clique"
 	"github.com/ethereum/go-ethereum/crypto"
+	ethservice "github.com/ethereum/go-ethereum/eth"
 	"github.com/ethereum/go-ethereum/eth/catalyst"
 	"github.com/ethereum/go-ethereum/eth/ethconfig"
 	"github.com/ethereum/go-ethereum/internal/flags"
@@ -43,6 +46,7 @@ import (
 	"github.com/ethereum/go-ethereum/internal/version"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/metrics"
+	"github.com/ethereum/go-ethereum/miner"
 	"github.com/ethereum/go-ethereum/node"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/naoina/toml"
@@ -110,6 +114,19 @@ type gethConfig struct {
 	Node     node.Config
 	Ethstats ethstatsConfig
 	Metrics  metrics.Config
+}
+
+type cliqueSealingLifecycle struct {
+	miner *miner.Miner
+}
+
+func (l *cliqueSealingLifecycle) Start() error {
+	return l.miner.StartSealing()
+}
+
+func (l *cliqueSealingLifecycle) Stop() error {
+	l.miner.StopSealing()
+	return nil
 }
 
 func loadConfig(file string, cfg *gethConfig) error {
@@ -220,6 +237,33 @@ func constructDevModeBanner(ctx *cli.Context, cfg gethConfig) string {
 	return devModeBanner
 }
 
+func configureCliqueSigner(ctx *cli.Context, stack *node.Node, eth *ethservice.Ethereum) {
+	if !ctx.IsSet(utils.CliqueSignerKeyFlag.Name) {
+		return
+	}
+	key, err := crypto.LoadECDSA(ctx.String(utils.CliqueSignerKeyFlag.Name))
+	if err != nil {
+		utils.Fatalf("Failed to load clique signer key: %v", err)
+	}
+	beaconEngine, ok := eth.Engine().(*beacon.Beacon)
+	if !ok {
+		utils.Fatalf("--%s requires a beacon-wrapped clique engine", utils.CliqueSignerKeyFlag.Name)
+	}
+	cliqueEngine, ok := beaconEngine.InnerEngine().(*clique.Clique)
+	if !ok {
+		utils.Fatalf("--%s requires clique consensus", utils.CliqueSignerKeyFlag.Name)
+	}
+	addr := crypto.PubkeyToAddress(key.PublicKey)
+	cliqueEngine.Authorize(addr, func(hash []byte) ([]byte, error) {
+		return crypto.Sign(hash, key)
+	})
+	eth.Miner().SetFeeRecipient(addr)
+	log.Info("Configured Clique signer", "address", addr)
+	if ctx.Bool(utils.MiningEnabledFlag.Name) {
+		stack.RegisterLifecycle(&cliqueSealingLifecycle{miner: eth.Miner()})
+	}
+}
+
 // makeFullNode loads geth configuration and creates the Ethereum backend.
 func makeFullNode(ctx *cli.Context) *node.Node {
 	stack, cfg := makeConfigNode(ctx)
@@ -250,6 +294,7 @@ func makeFullNode(ctx *cli.Context) *node.Node {
 
 	// Add Ethereum service.
 	backend, eth := utils.RegisterEthService(stack, &cfg.Eth)
+	configureCliqueSigner(ctx, stack, eth)
 
 	// Create gauge with geth system and build information
 	if eth != nil { // The 'eth' backend may be nil in light mode

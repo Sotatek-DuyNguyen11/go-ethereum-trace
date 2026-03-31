@@ -101,6 +101,11 @@ func (p *Peer) Close() {
 	close(p.term)
 }
 
+// Term returns a channel that's closed when the peer terminates.
+func (p *Peer) Term() <-chan struct{} {
+	return p.term
+}
+
 // ID retrieves the peer's unique identifier.
 func (p *Peer) ID() string {
 	return p.id
@@ -115,6 +120,11 @@ func (p *Peer) Version() uint {
 // This will be nil for peers below protocol version eth/69.
 func (p *Peer) BlockRange() *BlockRangeUpdatePacket {
 	return p.lastRange.Load()
+}
+
+// SetBlockRange stores the latest announced block range for the peer.
+func (p *Peer) SetBlockRange(update *BlockRangeUpdatePacket) {
+	p.lastRange.Store(update)
 }
 
 // KnownTransaction returns whether peer is known to already have a transaction.

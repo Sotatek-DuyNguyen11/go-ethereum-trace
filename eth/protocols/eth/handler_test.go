@@ -173,6 +173,11 @@ func (b *testBackend) Handle(*Peer, Packet) error {
 	//panic("data processing tests should be done in the handler package")
 }
 
+func (b *testBackend) HandleBlockRangeUpdate(peer *Peer, update *BlockRangeUpdatePacket) error {
+	peer.SetBlockRange(update)
+	return nil
+}
+
 // Tests that block headers can be retrieved from a remote chain based on user queries.
 func TestGetBlockHeaders69(t *testing.T) { testGetBlockHeaders(t, ETH69) }
 

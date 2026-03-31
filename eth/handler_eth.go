@@ -19,6 +19,7 @@ package eth
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
@@ -83,6 +84,60 @@ func (h *ethHandler) Handle(peer *eth.Peer, packet eth.Packet) error {
 
 	default:
 		return fmt.Errorf("unexpected eth packet type: %T", packet)
+	}
+}
+
+// HandleBlockRangeUpdate reacts to remote head announcements by fetching the
+// announced header and feeding it into the beacon-style sync path.
+func (h *ethHandler) HandleBlockRangeUpdate(peer *eth.Peer, update *eth.BlockRangeUpdatePacket) error {
+	peer.SetBlockRange(update)
+
+	current := h.chain.CurrentBlock()
+	if update.LatestBlock < current.Number.Uint64() {
+		return nil
+	}
+	if update.LatestBlock == current.Number.Uint64() && update.LatestBlockHash == current.Hash() {
+		return nil
+	}
+	go h.syncPeerHead(peer, *update)
+	return nil
+}
+
+func (h *ethHandler) syncPeerHead(peer *eth.Peer, update eth.BlockRangeUpdatePacket) {
+	sink := make(chan *eth.Response, 1)
+	req, err := peer.RequestOneHeader(update.LatestBlockHash, sink)
+	if err != nil {
+		peer.Log().Debug("Failed to request announced head", "hash", update.LatestBlockHash, "err", err)
+		return
+	}
+	defer req.Close()
+
+	select {
+	case res := <-sink:
+		headers, ok := res.Res.(*eth.BlockHeadersRequest)
+		if !ok {
+			res.Done <- fmt.Errorf("unexpected response type %T", res.Res)
+			return
+		}
+		if len(*headers) != 1 {
+			res.Done <- fmt.Errorf("unexpected header count %d", len(*headers))
+			return
+		}
+		header := (*headers)[0]
+		if header.Hash() != update.LatestBlockHash || header.Number.Uint64() != update.LatestBlock {
+			res.Done <- fmt.Errorf("announced head mismatch")
+			return
+		}
+		err := h.downloader.BeaconDevSync(header)
+		res.Done <- nil
+		if err != nil {
+			peer.Log().Debug("Failed to sync chain to announced head", "number", header.Number.Uint64(), "hash", header.Hash(), "err", err)
+		}
+
+	case <-peer.Term():
+		return
+	case <-time.After(syncChallengeTimeout):
+		peer.Log().Debug("Timed out fetching announced head", "hash", update.LatestBlockHash, "number", update.LatestBlock)
 	}
 }
 

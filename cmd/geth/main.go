@@ -54,6 +54,7 @@ var (
 		utils.IdentityFlag,
 		utils.UnlockedAccountFlag,
 		utils.PasswordFileFlag,
+		utils.CliqueSignerKeyFlag,
 		utils.BootnodesFlag,
 		utils.MinFreeDiskSpaceFlag,
 		utils.KeyStoreDirFlag,
