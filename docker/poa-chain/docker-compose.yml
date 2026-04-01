@@ -15,8 +15,8 @@ services:
     depends_on:
       - tools
     ports:
-      - "127.0.0.1:9545:8545"
-      - "127.0.0.1:9546:8546"
+      - "0.0.0.0:9545:8545"
+      - "0.0.0.0:9546:8546"
       - "30413:30303/tcp"
       - "30413:30303/udp"
     volumes:
@@ -44,7 +44,7 @@ services:
         "--http.port",
         "8545",
         "--http.vhosts",
-        "localhost",
+        "localhost,rpc.poa-tracing.sotatek.works",
         "--http.api",
         "eth,net,web3,debug,txpool,clique",
         "--ws",
@@ -53,7 +53,7 @@ services:
         "--ws.port",
         "8546",
         "--ws.origins",
-        "http://localhost",
+        "http://localhost,https://rpc.poa-tracing.sotatek.works",
         "--ws.api",
         "eth,net,web3,debug,txpool,clique",
         "--mine",
@@ -99,7 +99,7 @@ services:
         "--http.port",
         "8545",
         "--http.vhosts",
-        "localhost",
+        "localhost,rpc.poa-tracing.sotatek.works",
         "--http.api",
         "eth,net,web3,debug,txpool,clique",
         "--ws",
@@ -108,7 +108,7 @@ services:
         "--ws.port",
         "8546",
         "--ws.origins",
-        "http://localhost",
+        "http://localhost,https://rpc.poa-tracing.sotatek.works",
         "--ws.api",
         "eth,net,web3,debug,txpool,clique",
         "--mine",
@@ -154,7 +154,7 @@ services:
         "--http.port",
         "8545",
         "--http.vhosts",
-        "localhost",
+        "localhost,rpc.poa-tracing.sotatek.works",
         "--http.api",
         "eth,net,web3,debug,txpool,clique",
         "--ws",
@@ -163,7 +163,7 @@ services:
         "--ws.port",
         "8546",
         "--ws.origins",
-        "http://localhost",
+        "http://localhost,https://rpc.poa-tracing.sotatek.works",
         "--ws.api",
         "eth,net,web3,debug,txpool,clique",
         "--mine",
