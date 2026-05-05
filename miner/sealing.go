@@ -3,7 +3,6 @@ package miner
 import (
 	"context"
 	"errors"
-	"math/big"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -86,9 +85,13 @@ func (miner *Miner) sealNextBlock(stop <-chan struct{}, headCh <-chan core.Chain
 	// loop instead of the historical worker pipeline. To avoid all validators
 	// racing to seal the same parent and splitting immediately, only the in-turn
 	// signer actively seals the next block from the current head.
-	if work.block.Difficulty().Cmp(big.NewInt(2)) != 0 {
-		return miner.waitForHeadChange(stop, headCh, subErr)
-	}
+	// NOTE: This restriction is intentionally disabled — allowing out-of-turn signers
+	// to seal prevents liveness failures when the in-turn signer is temporarily
+	// blocked by "signed recently" after a signer-set change. Clique.Seal() already
+	// applies wiggle delay for out-of-turn blocks so signers are naturally spread out.
+	// if work.block.Difficulty().Cmp(big.NewInt(2)) != 0 {
+	// 	return miner.waitForHeadChange(stop, headCh, subErr)
+	// }
 	results := make(chan *types.Block, 1)
 	sealStop := make(chan struct{})
 	if err := miner.engine.Seal(miner.chain, work.block, results, sealStop); err != nil {
