@@ -179,6 +179,120 @@ services:
         "extip:172.32.0.13"
       ]
 
+  node4:
+    image: go-ethereum-trace:poa-chain
+    container_name: poa-tracing-node-4
+    restart: unless-stopped
+    depends_on:
+      - node1
+    ports:
+      - "127.0.0.1:9551:8545"
+      - "127.0.0.1:9552:8546"
+      - "30416:30303/tcp"
+      - "30416:30303/udp"
+    volumes:
+      - ./genesis.json:/config/genesis.json:ro
+      - ./data/node4:/data
+    networks:
+      default:
+        ipv4_address: 172.32.0.14
+    command:
+      [
+        "geth",
+        "--datadir",
+        "/data",
+        "--networkid",
+        "31337",
+        "--syncmode",
+        "full",
+        "--port",
+        "30303",
+        "--bootnodes",
+        "${BOOTNODES}",
+        "--http",
+        "--http.addr",
+        "0.0.0.0",
+        "--http.port",
+        "8545",
+        "--http.corsdomain",
+        "https://scan.poa-tracing.sotatek.works",
+        "--http.vhosts",
+        "localhost,rpc.poa-tracing.sotatek.works",
+        "--http.api",
+        "eth,net,web3,debug,txpool,clique",
+        "--ws",
+        "--ws.addr",
+        "0.0.0.0",
+        "--ws.port",
+        "8546",
+        "--ws.origins",
+        "http://localhost,https://rpc.poa-tracing.sotatek.works",
+        "--ws.api",
+        "eth,net,web3,debug,txpool,clique",
+        "--mine",
+        "--clique.signerkey",
+        "/data/signerkey",
+        "--nat",
+        "extip:172.32.0.14"
+      ]
+
+  node5:
+    image: go-ethereum-trace:poa-chain
+    container_name: poa-tracing-node-5
+    restart: unless-stopped
+    depends_on:
+      - node1
+    ports:
+      - "127.0.0.1:9553:8545"
+      - "127.0.0.1:9554:8546"
+      - "30417:30303/tcp"
+      - "30417:30303/udp"
+    volumes:
+      - ./genesis.json:/config/genesis.json:ro
+      - ./data/node5:/data
+    networks:
+      default:
+        ipv4_address: 172.32.0.15
+    command:
+      [
+        "geth",
+        "--datadir",
+        "/data",
+        "--networkid",
+        "31337",
+        "--syncmode",
+        "full",
+        "--port",
+        "30303",
+        "--bootnodes",
+        "${BOOTNODES}",
+        "--http",
+        "--http.addr",
+        "0.0.0.0",
+        "--http.port",
+        "8545",
+        "--http.corsdomain",
+        "https://scan.poa-tracing.sotatek.works",
+        "--http.vhosts",
+        "localhost,rpc.poa-tracing.sotatek.works",
+        "--http.api",
+        "eth,net,web3,debug,txpool,clique",
+        "--ws",
+        "--ws.addr",
+        "0.0.0.0",
+        "--ws.port",
+        "8546",
+        "--ws.origins",
+        "http://localhost,https://rpc.poa-tracing.sotatek.works",
+        "--ws.api",
+        "eth,net,web3,debug,txpool,clique",
+        "--mine",
+        "--clique.signerkey",
+        "/data/signerkey",
+        "--nat",
+        "extip:172.32.0.15"
+      ]
+
 networks:
   default:
     ipam:
